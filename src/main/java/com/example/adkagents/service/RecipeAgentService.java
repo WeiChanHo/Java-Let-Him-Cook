@@ -19,8 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 @Service
 public class RecipeAgentService {
-    @Value("${google.api.key}")
-    private String apiKey;
+
 
     private final InMemoryRunner runner;
     private final Session session;
