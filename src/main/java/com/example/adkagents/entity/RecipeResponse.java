@@ -9,9 +9,7 @@ import lombok.Data;
 public class RecipeResponse {
 
     @Id
-    private String id; // e.g. "dinner_suggestion_233"
-
-    @Lob
+    private String id;
     @Column(columnDefinition = "TEXT")
     private String rawJson;
 }

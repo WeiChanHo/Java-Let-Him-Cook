@@ -3,6 +3,7 @@ package com.example.adkagents.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -18,9 +19,10 @@ import lombok.Data;
 public class RecipeSet {
 
     @Id
-    private String id; // Same as recipes_id
+    private String id;
 
     @OneToMany(mappedBy = "recipeSet", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    @JsonIgnore
     private List<Recipe> recipes = new ArrayList<>();
 }
