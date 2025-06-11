@@ -20,7 +20,7 @@ public class RecipeController{
     }
 
     @GetMapping("/set/{recipesId}/title/{title}")
-    public ResponseEntity<?> getBySetAndTitle(
+        public ResponseEntity<?> getBySetAndTitle(
     @PathVariable("recipesId") String recipesId,
     @PathVariable("title") String title){
         return recipeRepo.findByRecipeSet_IdAndTitle(recipesId, title)
