@@ -1,5 +1,5 @@
-# Maven target directory
 /target/
+/node_modules/
 
 # Compiled class files
 *.class
@@ -26,7 +26,7 @@
 hs_err_pid*
 replay_pid*
 
-# Eclipse/IntelliJ IDEA/VSCode project files (optional, if you use an IDE)
+# IDE files
 *.iml
 .idea/
 *.ipr
@@ -42,6 +42,3 @@ Thumbs.db
 
 # Ignore Spring Boot config if it has secrets
 src/main/resources/application.properties
-
-
-*.db
