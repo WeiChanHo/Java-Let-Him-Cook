@@ -39,6 +39,20 @@ export GOOGLE_API_KEY="your_google_api_key"
 export GOOGLE_GENAI_USE_VERTEXAI=false
 ```
 
+3. **Set up application.properties**
+## 🛠️ Configuration Setup
+
+Before running the Spring Boot backend, make sure to configure the following in `src/main/resources/application.properties`:
+
+### ✅ Required Properties
+
+```properties
+# JWT secret key used for signing tokens (change this to a strong, random value)
+jwt.secret=your_jwt_secret_here
+
+# Frontend origin(s) allowed for CORS (typically your dev server like Vite or React)
+frontend.origins=http://localhost:5173
+
 > 📌 Get your API key from AI studio, u might need to create a google cloud account before that
 
 ---
