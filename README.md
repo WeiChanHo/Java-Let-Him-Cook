@@ -52,7 +52,7 @@ jwt.secret=your_jwt_secret_here
 
 # Frontend origin(s) allowed for CORS (typically your dev server like Vite or React)
 frontend.origins=http://localhost:5173
-
+```
 > 📌 Get your API key from AI studio, u might need to create a google cloud account before that
 
 ---
