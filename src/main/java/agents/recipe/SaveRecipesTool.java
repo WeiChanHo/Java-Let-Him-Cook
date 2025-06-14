@@ -17,7 +17,7 @@ public class SaveRecipesTool {
         @Schema(name = "toolContext") ToolContext toolContext
     ) {
         toolContext.state().put("last_saved_recipes", recipesPayload);
-
+        System.out.println("saving ");
         RecipeStorageService service = ApplicationContextProvider.getBean(RecipeStorageService.class);
         service.saveGeneratedRecipes(recipesPayload);
 

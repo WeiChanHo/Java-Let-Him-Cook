@@ -1,58 +1,89 @@
 package com.example.adkagents.service;
-import agents.recipe.RecipeAgent;
+
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.List;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.example.adkagents.entity.Recipe;
+import com.example.adkagents.entity.RecipeResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.adk.agents.BaseAgent;
-import com.google.adk.runner.InMemoryRunner;
-import com.google.adk.sessions.Session;
 import com.google.adk.agents.RunConfig;
 import com.google.adk.events.Event;
+import com.google.adk.runner.InMemoryRunner;
+import com.google.adk.sessions.Session;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
+import com.example.adkagents.repository.RecipeRepository;
+import com.example.adkagents.repository.RecipeResponseRepository;
+
+import agents.recipe.RecipeAgent;
 import io.reactivex.rxjava3.core.Flowable;
+import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 @Service
+@RequiredArgsConstructor
 public class RecipeAgentService {
 
-
-    private final InMemoryRunner runner;
-    private final Session session;
-    private final BaseAgent agent;
-
-    public RecipeAgentService(){
-
-        this.agent = RecipeAgent.ROOT_AGENT;
-        this.runner =  new InMemoryRunner((agent));
-        this.session = runner.sessionService().createSession((
-            agent.name()
-        ), "tmp-user").blockingGet();
-    }
-
-    public String runRequest(String userInput){
+    private final UserUtilService userUtilService;
+    private final BaseAgent agent = RecipeAgent.ROOT_AGENT;
+    private final RecipeRepository recipeRepo;
+    private final RecipeResponseRepository recipeResRepo;
+    public String runRequest(String userInput) {
         try {
-        Content userMessage = Content.fromParts(Part.fromText(userInput));
-        Flowable<Event> events = runner.runWithSessionId(session.id(), userMessage, RunConfig.builder().build());
+            // ✅ Per-request session setup
+            String UserId = userUtilService.getCurrentUser().getId().toString();
+            InMemoryRunner runner = new InMemoryRunner(agent);
+            Session session = runner.sessionService().createSession(agent.name(), UserId).blockingGet();
+            System.out.println("Session for user: " + userUtilService.getCurrentUser().getId());
+            Content userMessage = Content.fromParts(Part.fromText(userInput+ " store it using `saveRecipes` tool**"));
+            Flowable<Event> events = runner.runAsync(UserId, session.id(), userMessage);
 
-        StringBuilder response = new StringBuilder();
-        events.blockingForEach(event -> {
-            event.content().ifPresent(content -> {
-                content.parts().ifPresent(parts -> {
-                    for (Part part : parts) {
-                        part.text().ifPresent(response::append);
-                    }
-                });
-            });
-        });
+            StringBuilder response = new StringBuilder();
+            events.blockingForEach(event -> {
+                event.content().ifPresent(content ->
+                    content.parts().ifPresent(parts ->
+                        parts.forEach(part ->
+                            part.text().ifPresent(response::append)
+                        )
+                    )
+                );
+            });;
+                // Extract JSON block from response
+            String output = response.toString();
+            int start = output.indexOf("{");
+            int end = output.lastIndexOf("}");
+            if (start != -1 && end != -1 && end > start) {
+                String jsonString = output.substring(start, end + 1);
 
-            return response.toString();
+                // Parse JSON to get recipes_id
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> jsonMap = mapper.readValue(jsonString, new TypeReference<>() {});
+                String recipesId = (String) jsonMap.get("recipes_id");
+
+                if (recipesId == null) return "No recipes_id found in JSON.";
+
+                RecipeResponse recipeRes = new RecipeResponse();
+                recipeRes.setId(recipesId);
+                recipeRes.setRawJson(jsonString);
+
+                List<Recipe> stored = recipeRepo.findByRecipeSet_Id(recipesId);
+
+                if (stored.isEmpty()) {
+                    throw new RuntimeException("No recipe found for ID: " + recipesId);
+                }
+
+
+            return recipesId;
+        }
+
+        return "No JSON object found in response.";
+
         } catch (Exception e) {
-            e.printStackTrace(); // 👈 This will show the real error
+            e.printStackTrace();
             return "Agent crashed: " + e.getMessage();
         }
     }
